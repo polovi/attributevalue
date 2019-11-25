@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "esnext",
+    "moduleResolution": "node",
+    "strict": true,
+    "declaration": true,
+    "noImplicitAny": false,
+    "removeComments": true,
+    "sourceMap": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "strictNullChecks": false
+  }
+}

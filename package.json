@@ -1,0 +1,24 @@
+{
+  "name": "aws-lambda-dynamodbattribute",
+  "version": "0.0.1",
+  "main": "index.js",
+  "types": "index.d.js",
+  "scripts": {
+    "build": "tsc --build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/polovi/aws-lambda-dynamodbattribute.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/polovi/aws-lambda-dynamodbattribute/issues"
+  },
+  "homepage": "https://github.com/polovi/aws-lambda-dynamodbattribute#readme",
+  "devDependencies": {
+    "@types/node": "^12.12.12",
+    "typescript": "^3.7.2"
+  }
+}
