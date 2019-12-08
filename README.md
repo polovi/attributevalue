@@ -1,32 +1,36 @@
-# aws-lambda-dynamodbattribute
+# dynamodbattribute
 
 ```ts
-import * as dynamodbattribute from 'aws-lambda-dynamodbattribute'
+import * as dynamodbattribute from 'dynamodbattribute'
 
 interface Item {
   nullvalue: any
   bvalue: boolean
   svalue: string
-  nvalue1: number
-  nvalue2: number
-  nvalue3: number
+  nvalue: number
+  bvalue: Buffer
   submap: { [key: string]: any }
   lsvalue: string[]
   lnvalue: number[]
   lmvalue: any[]
+  sset: Set<string>
+  nset: Set<number>
+  bset: Set<Uint8Array>
 }
 
 const v: Item = {
   nullvalue: null,
   bvalue: true,
   svalue: 'ahoj svete',
-  nvalue1: 20,
-  nvalue2: 20.4,
-  nvalue3: 20.45e10,
+  nvalue: 20,
+  bvalue: Buffer.from('hello world'),
   submap: { sv: 'ahoj sub' },
   lsvalue: ['ahoj', 'svete'],
   lnvalue: [1, 2],
   lmvalue: [1, 'ahoj', { sv: 'ahoj', nv: 10 }],
+  sset: new Set(['hello', 'world']),
+  nset: new Set([123, 456]),
+  bset: new Set([new Uint8Array([27]), new Uint8Array([13])]),
 }
 
 const marshaled = dynamodbattribute.marshalMap(v)
@@ -38,15 +42,17 @@ console.log(unmarshaled)
 
 ## Status
 
-### Implemented
+### Implemented data types
 
+- Null
 - String
 - Number
 - Boolean
-- Null
+- Buffer | Uint8Array
 - List
 - Map
-
-### Missing
-
-- binnary formats / Set
+- Object
+- Set<string>
+- Set<number>
+- Set<Buffer>
+- Set<Uint8Array>

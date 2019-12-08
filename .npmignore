@@ -1,5 +1,4 @@
 *.md
-**/*.ts
-!**/*.d.ts
+src/
 tsconfig.json
 .prettierrc.json

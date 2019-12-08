@@ -1,5 +1,7 @@
 import { AttributeValue } from './attributevalue';
-export declare function marshal(i: {}): AttributeValue;
-export declare function marshalMap(i: {}): {
+export declare function marshal(i: any): AttributeValue;
+export declare function marshalMap(i: any): {
     [key: string]: AttributeValue;
 };
+export declare function marshalList(i: any): AttributeValue[];
+export declare function encode(i: any): AttributeValue;
