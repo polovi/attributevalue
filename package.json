@@ -1,24 +1,42 @@
 {
-  "name": "aws-lambda-dynamodbattribute",
-  "version": "0.0.1",
-  "main": "index.js",
-  "types": "index.d.js",
+  "name": "dynamodbattribute",
+  "version": "0.1.0",
   "scripts": {
-    "build": "tsc --build"
+    "test": "jest",
+    "build": "tsc --build",
+    "postbuild": "rm lib/attributevalue.js"
   },
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/polovi/aws-lambda-dynamodbattribute.git"
+    "url": "git+https://github.com/polovi/dynamodbattribute.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/polovi/aws-lambda-dynamodbattribute/issues"
+    "url": "https://github.com/polovi/dynamodbattribute/issues"
   },
-  "homepage": "https://github.com/polovi/aws-lambda-dynamodbattribute#readme",
+  "homepage": "https://github.com/polovi/dynamodbattribute#readme",
   "devDependencies": {
-    "@types/node": "^12.12.12",
-    "typescript": "^3.7.2"
+    "@types/jest": "^24.0.23",
+    "@types/node": "^12.12.14",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.2.0",
+    "typescript": "^3.7.3"
+  },
+  "jest": {
+    "verbose": false,
+    "roots": [
+      "<rootDir>/src"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.+(ts|tsx|js)",
+      "**/?(*.)+(spec|test).+(ts|tsx|js)"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "ts-jest"
+    }
   }
 }
