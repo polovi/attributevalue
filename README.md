@@ -52,7 +52,7 @@ console.log(unmarshaled)
 - List
 - Map
 - Object
-- Set<string>
-- Set<number>
-- Set<Buffer>
-- Set<Uint8Array>
+- Set\<string\>
+- Set\<number\>
+- Set\<Buffer\>
+- Set\<Uint8Array\>
