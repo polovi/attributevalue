@@ -41,11 +41,14 @@ export function decode(av: AttributeValue): any {
 }
 
 function decodeList(avList: AttributeValue[]): any[] {
+  if (!Array.isArray(avList) || !avList.length) {
+    return []
+  }
   return avList.reduce<any[]>((out, i) => [...out, decode(i)], [])
 }
 
 function decodeMap(avMap: { [key: string]: AttributeValue }): any {
-  return Object.keys(avMap).reduce<any>(
+  return Object.keys(avMap || {}).reduce<any>(
     (out, k) => ({
       ...out,
       ...{ [k]: decode(avMap[k]) },

@@ -3,6 +3,7 @@ import { unmarshal, unmarshalMap, unmarshalList } from './decode'
 test('unmarshal null', () => {
   expect(unmarshal({ NULL: true })).toEqual(null)
   expect(unmarshal(null)).toEqual(null)
+  expect(unmarshal(undefined)).toEqual(null)
 })
 test('unmarshal boll', () => {
   expect(unmarshal({ BOOL: true })).toEqual(true)
@@ -22,12 +23,12 @@ test('unmarshal number', () => {
   expect(unmarshal({ B: u })).toEqual(u)
 })
 test('unmarshal map', () => {
+  expect(unmarshalMap(null)).toEqual({})
+  expect(unmarshalMap(undefined)).toEqual({})
   expect(
-    unmarshal({
-      M: {
-        abc: { N: '123' },
-        123: { S: 'abc' },
-      },
+    unmarshalMap({
+      abc: { N: '123' },
+      123: { S: 'abc' },
     })
   ).toEqual({
     abc: 123,
@@ -35,11 +36,9 @@ test('unmarshal map', () => {
   })
 })
 test('unmarshal list', () => {
-  expect(
-    unmarshal({
-      L: [{ S: 'abc' }, { N: '123' }],
-    })
-  ).toEqual(['abc', 123])
+  expect(unmarshalList(null)).toEqual([])
+  expect(unmarshalList(undefined)).toEqual([])
+  expect(unmarshalList([{ S: 'abc' }, { N: '123' }])).toEqual(['abc', 123])
 })
 test('unmarshal set', () => {
   expect(unmarshal({ SS: ['abc', '123'] })).toEqual(new Set(['abc', '123']))
