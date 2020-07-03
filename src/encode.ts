@@ -1,5 +1,5 @@
 import * as reflect from './reflect'
-import { AttributeValue } from './attributevalue'
+import { AttributeValue } from '@aws-sdk/client-dynamodb'
 
 export function marshal(i: any): AttributeValue {
   return encode(i)
@@ -63,20 +63,21 @@ function encodeArray(a: Array<any>): AttributeValue {
 }
 
 function encodeSet(s: Set<any>, t: reflect.Type): AttributeValue {
-  let av
+  let av: AttributeValue
+
   switch (t.elem().kind) {
     case reflect.String:
       av = { SS: [] }
-      s.forEach(v => av.SS.push(String(v)))
+      s.forEach((v) => av.SS.push(String(v)))
       break
     case reflect.Number:
       av = { NS: [] }
-      s.forEach(v => av.NS.push(String(v)))
+      s.forEach((v) => av.NS.push(String(v)))
       break
     case reflect.Buffer:
     case reflect.Uint8Array:
       av = { BS: [] }
-      s.forEach(v => av.BS.push(v))
+      s.forEach((v) => av.BS.push(v))
       break
     default:
       throw Error('invalid set type')
@@ -85,6 +86,6 @@ function encodeSet(s: Set<any>, t: reflect.Type): AttributeValue {
   return av
 }
 
-function encodeBinary(b: ArrayBuffer | ArrayBufferView): AttributeValue {
+function encodeBinary(b: Uint8Array): AttributeValue {
   return { B: b }
 }

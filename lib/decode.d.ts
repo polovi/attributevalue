@@ -1,4 +1,4 @@
-import { AttributeValue } from './attributevalue';
+import { AttributeValue } from '@aws-sdk/client-dynamodb';
 export declare function unmarshal<T>(av: AttributeValue): T;
 export declare function unmarshalMap<T extends object>(m: {
     [key: string]: AttributeValue;

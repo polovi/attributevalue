@@ -1,4 +1,4 @@
-import { AttributeValue } from './attributevalue'
+import { AttributeValue } from '@aws-sdk/client-dynamodb'
 
 export function unmarshal<T>(av: AttributeValue): T {
   return decode(av) as T
@@ -62,7 +62,7 @@ function decodeStringSet(ss: Array<string>): Set<string> {
 }
 
 function decodeNumberSet(ns: Array<string>): Set<number> {
-  return new Set(ns.map(v => Number(v)))
+  return new Set(ns.map((v) => Number(v)))
 }
 
 function decodeBinarySet(ns: Array<ArrayBuffer | ArrayBufferView>): Set<ArrayBuffer | ArrayBufferView> {

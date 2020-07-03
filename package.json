@@ -3,8 +3,7 @@
   "version": "0.1.1",
   "scripts": {
     "test": "jest",
-    "build": "tsc --build",
-    "postbuild": "rm lib/attributevalue.js"
+    "build": "tsc --build"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -20,11 +19,12 @@
   },
   "homepage": "https://github.com/polovi/dynamodbattribute#readme",
   "devDependencies": {
-    "@types/jest": "^24.0.25",
-    "@types/node": "^13.1.4",
-    "jest": "^24.9.0",
-    "ts-jest": "^24.3.0",
-    "typescript": "^3.7.4"
+    "@aws-sdk/client-dynamodb": "^1.0.0-gamma.2",
+    "@types/jest": "^26.0.3",
+    "@types/node": "^14.0.14",
+    "jest": "^26.1.0",
+    "ts-jest": "^26.1.1",
+    "typescript": "^3.9.6"
   },
   "jest": {
     "verbose": false,
