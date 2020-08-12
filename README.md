@@ -1,5 +1,6 @@
 # dynamodbattribute
 
+<!--
 ```ts
 import * as dynamodbattribute from 'dynamodbattribute'
 
@@ -55,4 +56,4 @@ console.log(unmarshaled)
 - Set\<string\>
 - Set\<number\>
 - Set\<Buffer\>
-- Set\<Uint8Array\>
+- Set\<Uint8Array\> -->

@@ -1,91 +1,168 @@
-import * as reflect from './reflect'
 import { AttributeValue } from '@aws-sdk/client-dynamodb'
 
-export function marshal(i: any): AttributeValue {
-  return encode(i)
+export interface Encoder {
+  nullEmptyString?: boolean
+  omitEmpty?: boolean
 }
 
-export function marshalMap(i: any): { [key: string]: AttributeValue } {
-  return encode(i).M
+export const marshal = (i: any, e?: Encoder): AttributeValue => {
+  return encode(i, {
+    nullEmptyString: true,
+    omitEmpty: false,
+    ...e,
+  })
 }
 
-export function marshalList(i: any): AttributeValue[] {
-  return encode(i).L
+export function marshalMap(i: any, e?: Encoder): { [key: string]: AttributeValue } {
+  return marshal(i, e).M
 }
 
-export function encode(i: any): AttributeValue {
-  const t = reflect.typeOf(i)
+export function marshalList(i: any, e?: Encoder): AttributeValue[] {
+  return marshal(i, e).L
+}
 
-  switch (t.kind) {
-    case reflect.Invalid:
-      return { NULL: true }
-    case reflect.String:
-      return { S: String(i) }
-    case reflect.Number:
+const encode = (i: any, e: Encoder): AttributeValue => {
+  if (i === null || i === undefined) {
+    return encodeNull()
+  }
+
+  switch (typeof i) {
+    case 'object':
+      return encodeObject(i, e)
+    case 'string':
+      return encodeString(i, e)
+    case 'number':
       return { N: String(i) }
-    case reflect.Bool:
-      return { BOOL: Boolean(i) }
-    case reflect.Array:
-      return encodeArray(i)
-    case reflect.Map:
-      return encodeMap(i)
-    case reflect.Object:
-      return encodeStruct(i)
-    case reflect.Set:
-      return encodeSet(i, t)
-    case reflect.Buffer:
-    case reflect.Uint8Array:
-      return encodeBinary(i)
+    case 'boolean':
+      return { BOOL: i }
     default:
-      throw Error('invalid')
+      throw new UnsupportedMarshalTypeError(`value type ${typeof i} is not supported`)
   }
 }
 
-function encodeMap(m: Map<any, any>): AttributeValue {
-  const av = { M: {} }
-  m.forEach((v, k) => (av.M[String(k)] = encode(v)))
-  return av
-}
-function encodeStruct(o: object): AttributeValue {
-  return {
-    M: Object.keys(o).reduce(
-      (out, key) => ({
-        ...out,
-        ...{ [String(key)]: encode(o[key]) },
-      }),
-      {}
-    ),
-  }
-}
+const encodeNull = (): AttributeValue => ({
+  NULL: true,
+})
 
-function encodeArray(a: Array<any>): AttributeValue {
-  return { L: a.map(encode) }
-}
-
-function encodeSet(s: Set<any>, t: reflect.Type): AttributeValue {
-  let av: AttributeValue
-
-  switch (t.elem().kind) {
-    case reflect.String:
-      av = { SS: [] }
-      s.forEach((v) => av.SS.push(String(v)))
-      break
-    case reflect.Number:
-      av = { NS: [] }
-      s.forEach((v) => av.NS.push(String(v)))
-      break
-    case reflect.Buffer:
-    case reflect.Uint8Array:
-      av = { BS: [] }
-      s.forEach((v) => av.BS.push(v))
-      break
-    default:
-      throw Error('invalid set type')
+const encodeString = (s: any, e: Encoder): AttributeValue => {
+  if (!s && e.nullEmptyString) {
+    return encodeNull()
   }
 
+  return { S: s }
+}
+
+const encodeObject = (i: any, e: Encoder): AttributeValue => {
+  // switch (true) {
+  //   case i instanceof Map:
+  //     return encodeMap(i, e)
+  //   case i instanceof Set:
+  //     return encodeSet(i, e)
+  //   case Array.isArray(i):
+  //     return encodeList(i, e)
+  //   default:
+  //     return encodeStruct(i, e)
+  // }
+
+  if (i instanceof Map) {
+    return encodeMap(i, e)
+  } else if (i instanceof Set) {
+    return encodeSet(i, e)
+  } else if (Array.isArray(i)) {
+    return encodeList(i, e)
+  }
+  return encodeStruct(i, e)
+}
+
+const encodeStruct = (o: any, e: Encoder): AttributeValue => {
+  const av: AttributeValue = { M: {} }
+  for (let name in o) {
+    if (!name) {
+      throw new InvalidMarshalError('struct key cannot be empty')
+    }
+
+    let elem: AttributeValue = encode(o[name], e)
+    if (elem.NULL && e.omitEmpty) {
+      continue
+    }
+    av.M[name] = elem
+  }
   return av
 }
 
-function encodeBinary(b: Uint8Array): AttributeValue {
-  return { B: b }
+const encodeMap = (m: Map<any, any>, e: Encoder): AttributeValue => {
+  const av: AttributeValue = { M: {} }
+  for (let [name, value] of m) {
+    if (!name) {
+      throw new InvalidMarshalError('map key cannot be empty')
+    }
+
+    let elem: AttributeValue = encode(value, e)
+    if (elem.NULL && e.omitEmpty) {
+      continue
+    }
+    av.M[name] = elem
+  }
+  return av
+}
+
+const encodeSet = (s: Set<any>, e: Encoder): AttributeValue => {
+  if (!s.size) {
+    throw new InvalidMarshalError('set must only contain non-null numbers or strings')
+  }
+
+  const t = typeof s[Symbol.iterator]().next().value
+  const av: AttributeValue = {}
+
+  let elemFn: (elem: AttributeValue) => void
+
+  switch (t) {
+    case 'number':
+      av.NS = []
+      elemFn = (elem) => {
+        if (!elem.N) {
+          throw new InvalidMarshalError('number set must only contain non-null numbers')
+        }
+        av.NS.push(elem.N)
+      }
+      break
+    case 'string':
+      av.SS = []
+      elemFn = (elem) => {
+        if (!elem.S) {
+          throw new InvalidMarshalError('string set must only contain non-null strings')
+        }
+        av.SS.push(elem.S)
+      }
+      break
+    default:
+      throw new UnsupportedMarshalTypeError(`value type ${t} is not supported in set`)
+  }
+
+  encodeCollection(s, elemFn, e)
+
+  return av
+}
+
+const encodeList = (a: any[], e: Encoder): AttributeValue => {
+  const av: AttributeValue = { L: [] }
+  encodeCollection(a, (elem) => av.L.push(elem), e)
+  return av
+}
+
+const encodeCollection = (i: any[] | Set<any>, elemFn: (elem: AttributeValue) => void, e: Encoder) => {
+  for (let item of i) {
+    const elem = encode(item, { omitEmpty: e.omitEmpty })
+    if (elem.NULL && e.omitEmpty) {
+      continue
+    }
+    elemFn(elem)
+  }
+}
+
+export class UnsupportedMarshalTypeError extends Error {
+  name = 'UnsupportedMarshalTypeError'
+}
+export class InvalidMarshalError extends Error {
+  name = 'InvalidMarshalError'
 }
