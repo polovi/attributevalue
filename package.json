@@ -8,15 +8,15 @@
   "types": "lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/polovi/dynamodbattribute.git"
+    "url": "git+https://github.com/polovi/attributevalue.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/polovi/dynamodbattribute/issues"
+    "url": "https://github.com/polovi/attributevalue/issues"
   },
-  "homepage": "https://github.com/polovi/dynamodbattribute#readme",
+  "homepage": "https://github.com/polovi/attributevalue#readme",
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.44.0",
     "@types/node": "^17.0.0",
