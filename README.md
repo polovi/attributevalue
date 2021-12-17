@@ -3,7 +3,7 @@
 Smaller, simpler and faster version of [@aws-sdk/util-dynamodb](https://www.npmjs.com/package/@aws-sdk/util-dynamodb). Support only basic types based on [AttributeValue](https://www.npmjs.com/package/@aws-sdk/client-dynamodb) from dynamodb sdk client
 
 ```ts
-import attributevalue from 'attributevalue'
+import * as attributevalue from 'attributevalue'
 
 /*
 { 
@@ -28,7 +28,7 @@ attributevalue.marshalList(['Hello World'])
 ```
 
 ```ts
-import attributevalue from 'attributevalue'
+import * as attributevalue from 'attributevalue'
 
 // { key: 'name', value: 'John Doe' }
 attributevalue.unmarshal({
