@@ -1,59 +1,66 @@
-# dynamodbattribute
+# attributevalue
 
-<!--
+Smaller, simpler and faster version of [@aws-sdk/util-dynamodb](https://www.npmjs.com/package/@aws-sdk/util-dynamodb). Support only basic types based on [AttributeValue](https://www.npmjs.com/package/@aws-sdk/client-dynamodb) from dynamodb sdk client
+
 ```ts
-import * as dynamodbattribute from 'dynamodbattribute'
+import attributevalue from 'attributevalue'
 
-interface Item {
-  nullvalue: any
-  bvalue: boolean
-  svalue: string
-  nvalue: number
-  bvalue: Buffer
-  submap: { [key: string]: any }
-  lsvalue: string[]
-  lnvalue: number[]
-  lmvalue: any[]
-  sset: Set<string>
-  nset: Set<number>
-  bset: Set<Uint8Array>
+/*
+{ 
+  M: { 
+    key: { S: 'name' }, 
+    value: { S: 'John Doe' } 
+  } 
 }
+*/
+attributevalue.marshal({ key: 'name', value: 'John Doe' })
 
-const v: Item = {
-  nullvalue: null,
-  bvalue: true,
-  svalue: 'ahoj svete',
-  nvalue: 20,
-  bvalue: Buffer.from('hello world'),
-  submap: { sv: 'ahoj sub' },
-  lsvalue: ['ahoj', 'svete'],
-  lnvalue: [1, 2],
-  lmvalue: [1, 'ahoj', { sv: 'ahoj', nv: 10 }],
-  sset: new Set(['hello', 'world']),
-  nset: new Set([123, 456]),
-  bset: new Set([new Uint8Array([27]), new Uint8Array([13])]),
+/*
+{
+  key: { S: 'name' },
+  value: { S: 'John Doe' },
 }
+*/
+attributevalue.marshalMap({ key: 'name', value: 'John Doe' })
 
-const marshaled = dynamodbattribute.marshalMap(v)
-console.log(marshaled)
-
-const unmarshaled = dynamodbattribute.unmarshalMap<Item>(marshaled)
-console.log(unmarshaled)
+//[ { S: 'Hello World' } ]
+attributevalue.marshalList(['Hello World'])
 ```
 
-## Status
+```ts
+import attributevalue from 'attributevalue'
 
-### Implemented data types
+// { key: 'name', value: 'John Doe' }
+attributevalue.unmarshal({
+  M: {
+    key: { S: 'name' },
+    value: { S: 'John Doe' },
+  },
+})
 
-- Null
-- String
-- Number
-- Boolean
-- Buffer | Uint8Array
-- List
-- Map
-- Object
-- Set\<string\>
-- Set\<number\>
-- Set\<Buffer\>
-- Set\<Uint8Array\> -->
+// { key: 'name', value: 'John Doe' }
+attributevalue.unmarshalMap({
+  key: { S: 'name' },
+  value: { S: 'John Doe' },
+})
+
+// [ 'Hello World' ]
+attributevalue.unmarshalList([{ S: 'Hello World' }])
+
+/*
+[
+  { key: 'name', value: 'John Doe' },
+  { key: 'name', value: 'Jane Doe' }
+]
+*/
+attributevalue.unmarshalListOfMaps([
+  {
+    key: { S: 'name' },
+    value: { S: 'John Doe' },
+  },
+  {
+    key: { S: 'name' },
+    value: { S: 'Jane Doe' },
+  },
+])
+```

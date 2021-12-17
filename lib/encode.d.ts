@@ -1,16 +1,12 @@
-import { AttributeValue } from '@aws-sdk/client-dynamodb';
-export interface Encoder {
-    nullEmptyString?: boolean;
-    omitEmpty?: boolean;
+import { AttributeValue } from '@aws-sdk/client-dynamodb'
+export interface EncoderOptions {
+  NullEmptySets: boolean
 }
-export declare const marshal: (i: any, e?: Encoder) => AttributeValue;
-export declare function marshalMap(i: any, e?: Encoder): {
-    [key: string]: AttributeValue;
-};
-export declare function marshalList(i: any, e?: Encoder): AttributeValue[];
-export declare class UnsupportedMarshalTypeError extends Error {
-    name: string;
+export declare const marshal: (i: any, e?: EncoderOptions) => AttributeValue
+export declare const marshalMap: (
+  i: any,
+  e?: EncoderOptions
+) => {
+  [key: string]: AttributeValue
 }
-export declare class InvalidMarshalError extends Error {
-    name: string;
-}
+export declare const marshalList: (i: any, e?: EncoderOptions) => AttributeValue[]

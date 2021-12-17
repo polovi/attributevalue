@@ -1,24 +1,21 @@
 import { AttributeValue } from '@aws-sdk/client-dynamodb'
 
-export const unmarshal = <T>(av: AttributeValue): T => decode(av) as T
+export const unmarshal = (av: AttributeValue): any => decode(av)
 
-export const unmarshalMap = <T extends object>(m: { [key: string]: AttributeValue }): T => decode({ M: m }) as T
+export const unmarshalMap = (m: { [key: string]: AttributeValue }): any => decode({ M: m })
 
-export const unmarshalList = <T extends any[]>(l: AttributeValue[]): T => decode({ L: l }) as T
+export const unmarshalList = (l: AttributeValue[]): any => decode({ L: l })
 
-export const unmarshalListOfMaps = <T extends any[]>(l: Array<{ [key: string]: AttributeValue }>): T => {
-  return unmarshalList(
-    l.map<AttributeValue>((m) => ({ M: m }))
-  )
-}
+export const unmarshalListOfMaps = (l: Array<{ [key: string]: AttributeValue }>): any =>
+  unmarshalList(l.map((m) => ({ M: m })))
 
-const decode = (av: AttributeValue): any => {
+const decode = (av: any): any => {
   if (!av || av.NULL !== undefined) {
     return null
   } else if (av.S !== undefined) {
     return av.S
   } else if (av.N !== undefined) {
-    return Number(av.N)
+    return decodeNumber(av.N)
   } else if (av.L !== undefined) {
     return av.L.map(decode)
   } else if (av.M !== undefined) {
@@ -28,20 +25,30 @@ const decode = (av: AttributeValue): any => {
   } else if (av.SS !== undefined) {
     return new Set(av.SS)
   } else if (av.NS !== undefined) {
-    return new Set(av.NS)
+    return new Set(av.NS.map(decodeNumber))
+  } else if (av.BS !== undefined) {
+    return new Set(av.BS)
+  } else if (av.B !== undefined) {
+    return av.B
   }
 
-  throw new UnmarshalTypeError('cannot unmarshal')
+  throw new Error(`unsupported AttributeValue type ${JSON.stringify(av)}`)
 }
 
-const decodeMap = (avMap: { [key: string]: AttributeValue } = {}) => {
+const decodeNumber = (n: string): number | bigint => {
+  const num = Number(n)
+
+  if (num > Number.MAX_SAFE_INTEGER || num < Number.MIN_SAFE_INTEGER) {
+    return BigInt(n)
+  }
+
+  return num
+}
+
+const decodeMap = (m: { [key: string]: AttributeValue } = {}) => {
   const o: any = {}
-  for (const key in avMap) {
-    o[key] = decode(avMap[key])
+  for (const key in m) {
+    o[key] = decode(m[key])
   }
   return o
-}
-
-export class UnmarshalTypeError extends Error {
-  name = 'UnmarshalTypeError'
 }

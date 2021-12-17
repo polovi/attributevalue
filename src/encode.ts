@@ -1,168 +1,131 @@
 import { AttributeValue } from '@aws-sdk/client-dynamodb'
 
-export interface Encoder {
-  nullEmptyString?: boolean
-  omitEmpty?: boolean
+export interface EncoderOptions {
+  NullEmptySets: boolean
 }
 
-export const marshal = (i: any, e?: Encoder): AttributeValue => {
-  return encode(i, {
-    nullEmptyString: true,
-    omitEmpty: false,
+export const marshal = (i: any, e?: EncoderOptions): AttributeValue =>
+  encode(i, {
+    NullEmptySets: false,
     ...e,
   })
-}
 
-export function marshalMap(i: any, e?: Encoder): { [key: string]: AttributeValue } {
-  return marshal(i, e).M
-}
+export const marshalMap = (i: any, e?: EncoderOptions): { [key: string]: AttributeValue } => marshal(i, e)?.M
 
-export function marshalList(i: any, e?: Encoder): AttributeValue[] {
-  return marshal(i, e).L
-}
+export const marshalList = (i: any, e?: EncoderOptions): AttributeValue[] => marshal(i, e).L
 
-const encode = (i: any, e: Encoder): AttributeValue => {
-  if (i === null || i === undefined) {
+const encode = (i: any, e: EncoderOptions): AttributeValue => {
+  if (i === null || i === undefined || i === NaN) {
     return encodeNull()
   }
 
-  switch (typeof i) {
-    case 'object':
-      return encodeObject(i, e)
+  const type = typeof i
+
+  switch (type) {
     case 'string':
-      return encodeString(i, e)
+      return { S: i }
     case 'number':
-      return { N: String(i) }
+    case 'bigint':
+      return { N: i.toString() }
     case 'boolean':
-      return { BOOL: i }
+      return { BOOL: i.valueOf() }
     default:
-      throw new UnsupportedMarshalTypeError(`value type ${typeof i} is not supported`)
+      return encodeObject(i, e)
   }
 }
 
-const encodeNull = (): AttributeValue => ({
-  NULL: true,
+const encodeNull = (): AttributeValue.NULLMember => ({ NULL: true })
+
+const encodeObject = (o: any, e: EncoderOptions): AttributeValue => {
+  switch (o.constructor) {
+    case Array:
+      return encodeList(o, e)
+    case Object:
+      return encodeStruct(o, e)
+    case Map:
+      return encodeMap(o, e)
+    case Set:
+      return encodeSet(o, e)
+    case Uint8Array:
+      return { B: o }
+    default:
+      throw new Error(`Unsupported type ${o.constructor.name}`)
+  }
+}
+
+const encodeList = (l: any[], e: EncoderOptions): AttributeValue.LMember => ({
+  L: l.map((item): AttributeValue => encode(item, e)),
 })
 
-const encodeString = (s: any, e: Encoder): AttributeValue => {
-  if (!s && e.nullEmptyString) {
-    return encodeNull()
-  }
-
-  return { S: s }
-}
-
-const encodeObject = (i: any, e: Encoder): AttributeValue => {
-  // switch (true) {
-  //   case i instanceof Map:
-  //     return encodeMap(i, e)
-  //   case i instanceof Set:
-  //     return encodeSet(i, e)
-  //   case Array.isArray(i):
-  //     return encodeList(i, e)
-  //   default:
-  //     return encodeStruct(i, e)
-  // }
-
-  if (i instanceof Map) {
-    return encodeMap(i, e)
-  } else if (i instanceof Set) {
-    return encodeSet(i, e)
-  } else if (Array.isArray(i)) {
-    return encodeList(i, e)
-  }
-  return encodeStruct(i, e)
-}
-
-const encodeStruct = (o: any, e: Encoder): AttributeValue => {
+const encodeStruct = (o: Object, e: EncoderOptions): AttributeValue.MMember => {
   const av: AttributeValue = { M: {} }
   for (let name in o) {
     if (!name) {
-      throw new InvalidMarshalError('struct key cannot be empty')
+      throw new Error("map key can't be empty")
     }
 
-    let elem: AttributeValue = encode(o[name], e)
-    if (elem.NULL && e.omitEmpty) {
-      continue
-    }
-    av.M[name] = elem
+    av.M[name.toString()] = encode(o[name], e)
   }
   return av
 }
-
-const encodeMap = (m: Map<any, any>, e: Encoder): AttributeValue => {
+const encodeMap = (m: Map<any, any>, e: EncoderOptions): AttributeValue.MMember => {
   const av: AttributeValue = { M: {} }
   for (let [name, value] of m) {
     if (!name) {
-      throw new InvalidMarshalError('map key cannot be empty')
+      throw new Error("map key can't be empty")
     }
-
-    let elem: AttributeValue = encode(value, e)
-    if (elem.NULL && e.omitEmpty) {
-      continue
-    }
-    av.M[name] = elem
+    av.M[name.toString()] = encode(value, e)
   }
   return av
 }
 
-const encodeSet = (s: Set<any>, e: Encoder): AttributeValue => {
-  if (!s.size) {
-    throw new InvalidMarshalError('set must only contain non-null numbers or strings')
+const encodeSet = (s: Set<any>, e: EncoderOptions): AttributeValue => {
+  if (s.size === 0) {
+    if (e.NullEmptySets) {
+      return encodeNull()
+    }
+    throw new Error('set must only contain non-null elements')
   }
 
-  const t = typeof s[Symbol.iterator]().next().value
-  const av: AttributeValue = {}
-
-  let elemFn: (elem: AttributeValue) => void
+  const val = s.values().next().value
+  const t = typeof val
 
   switch (t) {
     case 'number':
-      av.NS = []
-      elemFn = (elem) => {
-        if (!elem.N) {
-          throw new InvalidMarshalError('number set must only contain non-null numbers')
-        }
-        av.NS.push(elem.N)
+    case 'bigint':
+      return {
+        NS: Array.from(s).map((elem) => {
+          const elemt = typeof elem
+
+          if (elemt !== 'number' && elemt !== 'bigint') {
+            throw new Error('number set must only contain non-null numbers')
+          }
+
+          return elem.toString()
+        }),
       }
-      break
     case 'string':
-      av.SS = []
-      elemFn = (elem) => {
-        if (!elem.S) {
-          throw new InvalidMarshalError('string set must only contain non-null strings')
-        }
-        av.SS.push(elem.S)
+      return {
+        SS: Array.from(s).map((elem) => {
+          if (typeof elem !== 'string') {
+            throw new Error('string set must only contain non-null strings')
+          }
+
+          return elem
+        }),
       }
-      break
     default:
-      throw new UnsupportedMarshalTypeError(`value type ${t} is not supported in set`)
+      if (val.constructor === Uint8Array) {
+        return {
+          BS: Array.from(s).map((elem) => {
+            if (elem?.constructor !== Uint8Array) {
+              throw new Error('binary set must only contain non-null binary data')
+            }
+            return elem as Uint8Array
+          }),
+        }
+      }
+
+      throw new Error(`value type ${t} is not supported in set`)
   }
-
-  encodeCollection(s, elemFn, e)
-
-  return av
-}
-
-const encodeList = (a: any[], e: Encoder): AttributeValue => {
-  const av: AttributeValue = { L: [] }
-  encodeCollection(a, (elem) => av.L.push(elem), e)
-  return av
-}
-
-const encodeCollection = (i: any[] | Set<any>, elemFn: (elem: AttributeValue) => void, e: Encoder) => {
-  for (let item of i) {
-    const elem = encode(item, { omitEmpty: e.omitEmpty })
-    if (elem.NULL && e.omitEmpty) {
-      continue
-    }
-    elemFn(elem)
-  }
-}
-
-export class UnsupportedMarshalTypeError extends Error {
-  name = 'UnsupportedMarshalTypeError'
-}
-export class InvalidMarshalError extends Error {
-  name = 'InvalidMarshalError'
 }
