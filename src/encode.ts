@@ -15,7 +15,7 @@ export const marshalMap = (i: any, e?: EncoderOptions): { [key: string]: Attribu
 export const marshalList = (i: any, e?: EncoderOptions): AttributeValue[] => marshal(i, e).L
 
 const encode = (i: any, e: EncoderOptions): AttributeValue => {
-  if (i === null || i === undefined || i === NaN) {
+  if (i === null || i === undefined || Number.isNaN(i)) {
     return encodeNull()
   }
 
